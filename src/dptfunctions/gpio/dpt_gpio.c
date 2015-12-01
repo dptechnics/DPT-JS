@@ -70,8 +70,8 @@ const bool gpio_config[28] = {
 };
 
 static bool gpio_reserve(int gpio) {
-    int fd; /* File descriptor for GPIO controller class */
-    char buf[3]; /* Write buffer */
+    int fd;         /* File descriptor for GPIO controller class */
+    char buf[3];    /* Write buffer */
 
     /* Try to open GPIO controller class */
     fd = open("/sys/class/gpio/export", O_WRONLY);
@@ -229,6 +229,19 @@ int gpio_get_state(int gpio) {
 }
 
 /**
+ * Release all GPIO ports from previous sessions. 
+ */
+void gpio_release_all() {
+    int i;
+    
+    for(i = 1; i < 28; ++i) {
+        if(gpio_config[i]) {
+            gpio_release(i);
+        }
+    }
+}
+
+/**
  * Install the GPIO module in the duktape interpreter. 
  * @param ctx the duktape context to register the module in. 
  */
@@ -243,6 +256,8 @@ void gpio_install_dpt_module(duk_context *ctx)
     duk_push_c_function(ctx, digitalRead, DUK_VARARGS);
     duk_put_prop_string(ctx, -2, "digitalRead");
     duk_pop(ctx);
+    
+    gpio_release_all();
 }
 
 /**
